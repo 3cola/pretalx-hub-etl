@@ -7,11 +7,26 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 
+# Some mapping table
+# We expect these rooms to exists with these names
+MAP_ROOMS = {
+    1: "CDC Triangle",
+    2: "CDC Circle",
+    3: "Room 3",
+}
+
 # Some settings
 SOURCE_SCHEDULE_JSON_URL = "https://pretalx.riat.at/38c3/schedule/widgets/schedule.json"
 
+# AUTO_PUBLISH is strongly recommended, if not, the events don't appear
+# in the rest api and are created again if the script run again
 AUTO_PUBLISH = True
+
+# AUTO_DELETE will delete any events that dont exist in the source
 AUTO_DELETE_EVENTS = True
+
+# You should keep this secret
+# TODO: make the api token an env variable
 TARGET_API_TOKEN = "c3hub_tMzGgU9uz5qYqOQwxvZ75uYJdDrnPsVclI6GVgKeqNY5sEt6T0"
 TARGET_SCHEME = "http"
 TARGET_HTTP_HOST = "localhost"
@@ -46,7 +61,6 @@ if not ASSEMBLY_ID:
         + ASSEMBLY_SLUG
         + " does not exists. You should create it first."
     )
-# ASSEMBLY_ID = "7f98e4c5-07c8-482d-b331-47826b8e732b"
 
 TARGET_URL_LOGIN = TARGET_SCHEME + "://" + TARGET_HTTP_HOST + "/accounts/login/"
 TARGET_URL_ASSEMBLY_NEW_EVENT = (
@@ -65,14 +79,6 @@ TARGET_URL_ASSEMBLY_UPDATE_EVENT = (
     + ASSEMBLY_ID
     + "/e/"
 )
-
-# Some mapping tables
-# We expect these rooms to exists with these names
-MAP_ROOMS = {
-    1: "CDC Triangle",
-    2: "CDC Circle",
-    3: "Room 3",
-}
 
 
 # Some function
@@ -127,16 +133,18 @@ talks = source_schedule["talks"]
 for talk in talks:
     event = {}
     event["name"] = talk["title"] or ""
+    # TODO: check what to put in the location...
     event["location"] = "CDC"
     # here we need a mapping table and solve the roomId
     event["room"] = MAP_ROOMS[talk["room"]] or ""
     event["language"] = "en"
     event["abstract"] = talk["abstract"] or ""
     event["description_de"] = ""
+    # TODO: add the speaker in the description with the abstract or something
     event["description_en"] = ""
     event["schedule_start"] = datetime.strptime(talk["start"], "%Y-%m-%dT%H:%M:%S%z")
     event["duration"] = talk["duration"]
-    # space delimited words
+    # space delimited words ?
     # I use the tag to store the pretalx talk code
     event["tags"] = talk["code"] or ""
     # check if the event exists on the target to decide if we create it or update it
@@ -155,7 +163,7 @@ for talk in talks:
 print("events " + str(len(events)))
 # pprint(events)
 
-# check events that have been deleted from source, so we can delete them in the target
+# check events that dont exist / have been deleted from source, so we can delete them in the target
 events_to_delete = []
 for te in target_events:
     tetags = te["tags"][0].lower()
@@ -167,6 +175,7 @@ for te in target_events:
     if exists == False:
         event = {}
         event["id"] = te["id"]
+        event["name"] = te["name"]
         event["op_flag"] = "delete"
         events_to_delete.append(event)
 
@@ -240,9 +249,12 @@ for event in events:
     # check for invalid
     messages_element = driver.find_element(By.ID, "messages")
     messages_html = messages_element.get_attribute("innerHTML")
-    if messages_html.lower().find("invalid") > 0:
+    is_invalid = True if messages_html.lower().find("invalid") > 0 else False
+    if is_invalid:
+        # The submission on the form failed, the update or create was not successful
         print("Invalid form submit : " + event["op_flag"] + " " + event["name"])
-    if AUTO_PUBLISH:
+        sleep(5)
+    if AUTO_PUBLISH and not is_invalid:
         sleep(1)
         publish_button = driver.find_element(By.ID, "publishEvent")
         if publish_button.text == "Event__publish__submit":
