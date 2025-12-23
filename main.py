@@ -218,12 +218,20 @@ for event in events:
     driver.find_element(By.NAME, "tags_list").clear()
     driver.find_element(By.NAME, "tags_list").send_keys(event["tags"])
     driver.find_element(By.ID, "eventForm").submit()
-    # wait few seconds
-    sleep(1)
+    # wait few seconds, the element with id messages may take a delay to appear
+    sleep(2)
     # check for invalid
-    messages_element = driver.find_element(By.ID, "messages")
-    messages_html = messages_element.get_attribute("innerHTML") or ""
-    is_invalid = True if messages_html.lower().find("invalid") > 0 else False
+    messages_html = None
+    try:
+        messages_element = driver.find_element(By.ID, "messages")
+        messages_html = messages_element.get_attribute("innerHTML") or ""
+    except Exception as e:
+        print("element with id 'messages' was not found")
+        print(e)
+
+    is_invalid = (
+        True if messages_html and messages_html.lower().find("invalid") > 0 else False
+    )
     if is_invalid:
         # The submission on the form failed, the update or create was not successful
         print("Invalid form submit : " + event["op_flag"] + " " + event["name"])
