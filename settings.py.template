@@ -1,0 +1,37 @@
+###############################################################################
+# Some settings
+
+# Some mapping table, We expect these rooms to exists with these names
+# TODO: setup this value to match what is coming from pretalx and what is setup in the Hub
+# This map room id from pretalx to room name in the Hub
+MAP_ROOMS = {
+    1: "CDC Triangle",
+    2: "CDC Circle",
+    3: "Room 3",
+}
+
+# TODO: change this setting when pretalx 39c3 ready
+SOURCE_SCHEDULE_JSON_URL = "https://pretalx.riat.at/38c3/schedule/widgets/schedule.json"
+# SOURCE_SCHEDULE_JSON_URL = "https://pretalx.riat.at/39c3/schedule/widgets/schedule.json"
+
+# AUTO_PUBLISH is strongly recommended, if not, the events don't appear
+# in the rest api and are created again if the script run again
+AUTO_PUBLISH = True
+
+# AUTO_DELETE will delete any events that dont exist in the source
+AUTO_DELETE_EVENTS = True
+
+# INTERACTIVE will block if an invalid form submit is detected and wait for user input
+INTERACTIVE = True
+
+# TODO: change all these settings
+TARGET_API_TOKEN = "c3hub_m4qvIZW1UpaIF7sFmARHk8Dhmt1pbsHXyFgpZqCs0aj3tQhAaT"
+TARGET_HTTP_PART1 = "http://localhost"
+# TARGET_HTTP_PART1 = "https://events.ccc.de/congress/2025/hub"
+TARGET_API_PART1 = "http://localhost/api"
+# TARGET_API_PART1 = "https://api.events.ccc.de/congress/2025"
+TARGET_API_PART2 = "/v2/"
+# We expect an assembly to exists with this slug
+ASSEMBLY_SLUG = "cdc"
+
+###############################################################################

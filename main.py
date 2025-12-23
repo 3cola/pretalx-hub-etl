@@ -7,48 +7,31 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 
-# Some mapping table
-# We expect these rooms to exists with these names
-MAP_ROOMS = {
-    1: "CDC Triangle",
-    2: "CDC Circle",
-    3: "Room 3",
-}
-
-# Some settings
-SOURCE_SCHEDULE_JSON_URL = "https://pretalx.riat.at/38c3/schedule/widgets/schedule.json"
-
-# AUTO_PUBLISH is strongly recommended, if not, the events don't appear
-# in the rest api and are created again if the script run again
-AUTO_PUBLISH = True
-
-# AUTO_DELETE will delete any events that dont exist in the source
-AUTO_DELETE_EVENTS = True
-
-# You should keep this secret
-# TODO: make the api token an env variable
-TARGET_API_TOKEN = "c3hub_tMzGgU9uz5qYqOQwxvZ75uYJdDrnPsVclI6GVgKeqNY5sEt6T0"
-TARGET_SCHEME = "http"
-TARGET_HTTP_HOST = "localhost"
-TARGET_API_HOST = "localhost"
-TARGET_API_PATH = "/api/v2/"
-# TARGET_API = "/congress/2025/v2/"
-TARGET_URL_API_ASSEMBLIES = (
-    TARGET_SCHEME + "://" + TARGET_API_HOST + TARGET_API_PATH + "assemblies/"
+from settings import (
+    MAP_ROOMS,
+    SOURCE_SCHEDULE_JSON_URL,
+    AUTO_PUBLISH,
+    AUTO_DELETE_EVENTS,
+    INTERACTIVE,
+    TARGET_API_TOKEN,
+    TARGET_HTTP_PART1,
+    TARGET_API_PART1,
+    TARGET_API_PART2,
+    ASSEMBLY_SLUG,
 )
-TARGET_URL_API_EVENTS = (
-    TARGET_SCHEME + "://" + TARGET_API_HOST + TARGET_API_PATH + "events/"
-)
-# We expect an assembly to exists with this slug
-ASSEMBLY_SLUG = "cdc"
-#
-# # get the ASSEMBLY_ID
+
+# Setting up constants
+TARGET_URL_API_ASSEMBLIES = TARGET_API_PART1 + TARGET_API_PART2 + "assemblies/"
+TARGET_URL_API_EVENTS = TARGET_API_PART1 + TARGET_API_PART2 + "events/"
+
+# get the ASSEMBLY_ID
 API_HEADERS = {"Authorization": "Bearer " + TARGET_API_TOKEN, "Accept": "json"}
+# print(API_HEADERS)
 query_params = {"slug": ASSEMBLY_SLUG}
 response = requests.get(
     url=TARGET_URL_API_ASSEMBLIES, headers=API_HEADERS, params=query_params
 )
-# print(response)
+print(response)
 response_json = response.json()
 if len(response_json["data"]) == 0:
     print(response_json)
@@ -62,22 +45,12 @@ if not ASSEMBLY_ID:
         + " does not exists. You should create it first."
     )
 
-TARGET_URL_LOGIN = TARGET_SCHEME + "://" + TARGET_HTTP_HOST + "/accounts/login/"
+TARGET_URL_LOGIN = TARGET_HTTP_PART1 + "/accounts/login/"
 TARGET_URL_ASSEMBLY_NEW_EVENT = (
-    TARGET_SCHEME
-    + "://"
-    + TARGET_HTTP_HOST
-    + "/backoffice/assembly/"
-    + ASSEMBLY_ID
-    + "/new_event"
+    TARGET_HTTP_PART1 + "/backoffice/assembly/" + ASSEMBLY_ID + "/new_event"
 )
 TARGET_URL_ASSEMBLY_UPDATE_EVENT = (
-    TARGET_SCHEME
-    + "://"
-    + TARGET_HTTP_HOST
-    + "/backoffice/assembly/"
-    + ASSEMBLY_ID
-    + "/e/"
+    TARGET_HTTP_PART1 + "/backoffice/assembly/" + ASSEMBLY_ID + "/e/"
 )
 
 
@@ -202,6 +175,7 @@ if AUTO_DELETE_EVENTS == True:
             print("delete " + event["name"])
             driver.get(TARGET_URL_ASSEMBLY_UPDATE_EVENT + event["id"])
             driver.find_element(By.ID, "EventDeleteForm").submit()
+            sleep(1)
 
 
 # create or update events
@@ -248,14 +222,15 @@ for event in events:
     sleep(1)
     # check for invalid
     messages_element = driver.find_element(By.ID, "messages")
-    messages_html = messages_element.get_attribute("innerHTML")
+    messages_html = messages_element.get_attribute("innerHTML") or ""
     is_invalid = True if messages_html.lower().find("invalid") > 0 else False
     if is_invalid:
         # The submission on the form failed, the update or create was not successful
         print("Invalid form submit : " + event["op_flag"] + " " + event["name"])
-        sleep(5)
-    if AUTO_PUBLISH and not is_invalid:
         sleep(1)
+        if INTERACTIVE:
+            input("Fix the invalid form, then Press Enter to continue...")
+    if AUTO_PUBLISH and not is_invalid:
         publish_button = driver.find_element(By.ID, "publishEvent")
         if publish_button.text == "Event__publish__submit":
             publish_button.click()
@@ -263,5 +238,5 @@ for event in events:
             driver.find_element(By.ID, "confirmationModalSubmit").click()
 
 # wait few seconds and quit
-sleep(5)
+sleep(2)
 driver.quit()

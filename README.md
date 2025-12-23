@@ -79,12 +79,90 @@ You can optionally tail the logs to see what is happening
 docker compose logs -f
 ```
 
-You should now have a development hub server available on `http://localhost:80/`
-to play with.\
+To reset the DB state
+
+```bash
+docker compose down -v
+```
+
+You should now have a development hub server available on `http://localhost/` to
+play with.\
 user is admin and password is admin
+
+## Manual setup
+
+You may need to edit in the conference admin srceen the conference dates (start
+and end dates) so that we can create events with dates in this range.
+
+You may need to manually create an Assembly with a slug "cdc".
+
+The Assembly needs to be in a state "registered" then in a state "accepted" ?
+(not sure)
+
+You may need to create an API Token for your assembly.
+
+You may need to manually create Rooms in the assembly with Name corresponding
+with the ROOM mapping table.
 
 ## python env for nixos user
 
 ```bash
 nix develop
 ```
+
+## Running the ETL
+
+All the relevant code is in the file _main.py_ All the relevant settings are in
+the file _settings.py_ You may need to copy it from settings.py.template
+
+```bash
+cp settings.py.template settings.py
+```
+
+You may need to read these files and edit the relevant settings.
+
+You may run it as follow
+
+```bash
+python3 ./main.py
+```
+
+## Common problems
+
+### the api token is not valid
+
+You should be able to test your api token with a simple curl, for example:
+
+```bash
+curl -v -H "Authorization: Bearer c3hub_tMzGgU9uz5qYqOQwxvZ75uYJdDrnPsVclI6GVgKeqNY5sEt6T0" -L "http://localhost/api/v2/assemblies/?slug=cdc"
+```
+
+It could also be that the assembly is not in the state "accepted" ? (not sure)
+
+### A form is invalid while submitting it
+
+It is usually a problem of schedule_start datetime that should be in the range
+of conference start datetime and end datetime.
+
+schedule_start + duration should also belong to this range.
+
+Check the conference start and end datetime.
+
+It can also be a problem if 2 events in the same room have schedule datetime
+that intersect.
+
+check the logs.
+
+## Caveats
+
+### Tags field
+
+This code use the event tags field to store the Code from pretalx. It is
+recommended to not use this field as it could lead to bugs.
+
+### The Hub is a slave
+
+With the current implementation, the Hub datastore, for the event object, is a
+slave of what comes from pretalx. Any changes to events only done in the Hub
+will likely be overwritten. Any Events only created in the Hub but not in
+pretalx will most likely be deleted.
