@@ -101,6 +101,12 @@ target_events = get_target_events(ASSEMBLY_ID, TARGET_URL_API_EVENTS, API_HEADER
 
 
 # Transform
+
+speaker_map = {}
+speakers = source_schedule["speakers"]
+for speaker in speakers:
+    speaker_map[speaker["code"]] = speaker["name"]
+
 events = []
 talks = source_schedule["talks"]
 for talk in talks:
@@ -112,9 +118,11 @@ for talk in talks:
     event["room"] = MAP_ROOMS[talk["room"]] or ""
     event["language"] = "en"
     event["abstract"] = talk["abstract"] or ""
+    event["speakers"] = list(map(lambda x: speaker_map[x], talk["speakers"]))
     event["description_de"] = ""
-    # TODO: add the speaker in the description with the abstract or something
-    event["description_en"] = ""
+    event["description_en"] = "Speaker{}: {}".format(
+        "" if len(event["speakers"]) == 1 else "s", ", ".join(event["speakers"])
+    )
     event["schedule_start"] = datetime.strptime(talk["start"], "%Y-%m-%dT%H:%M:%S%z")
     event["duration"] = talk["duration"]
     # space delimited words ?

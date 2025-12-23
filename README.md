@@ -1,5 +1,10 @@
 # pretalx-hub-etl
 
+## > [!WARNING]
+
+This script will maybe delete or update data in your assembly ! Make sure you
+have a backup, make sure to read the code and understand what it does.
+
 ## Setup dev environment for the hub api
 
 You may need to clone the hub repository and run it with docker-compose in order
