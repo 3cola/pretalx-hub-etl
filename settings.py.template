@@ -26,6 +26,8 @@ INTERACTIVE = True
 
 # TODO: change all these settings
 TARGET_API_TOKEN = "c3hub_m4qvIZW1UpaIF7sFmARHk8Dhmt1pbsHXyFgpZqCs0aj3tQhAaT"
+TARGET_HTTP_LOGIN = "admin"
+TARGET_HTTP_PASSWORD = "admin"
 TARGET_HTTP_PART1 = "http://localhost"
 # TARGET_HTTP_PART1 = "https://events.ccc.de/congress/2025/hub"
 TARGET_API_PART1 = "http://localhost/api"

@@ -14,6 +14,8 @@ from settings import (
     AUTO_DELETE_EVENTS,
     INTERACTIVE,
     TARGET_API_TOKEN,
+    TARGET_HTTP_LOGIN,
+    TARGET_HTTP_PASSWORD,
     TARGET_HTTP_PART1,
     TARGET_API_PART1,
     TARGET_API_PART2,
@@ -169,8 +171,8 @@ print("events_to_delete " + str(len(events_to_delete)))
 driver = webdriver.Firefox()
 # Login
 driver.get(TARGET_URL_LOGIN)
-driver.find_element(By.NAME, "login").send_keys("admin")
-driver.find_element(By.NAME, "password").send_keys("admin")
+driver.find_element(By.NAME, "login").send_keys(TARGET_HTTP_LOGIN)
+driver.find_element(By.NAME, "password").send_keys(TARGET_HTTP_PASSWORD)
 driver.find_element(
     By.XPATH, "/html/body/div[1]/div/div/div/div/div/form/div[2]/button"
 ).click()
